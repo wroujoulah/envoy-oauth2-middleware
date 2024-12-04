@@ -1,0 +1,14 @@
+{{- if .Values.podDisruptionBudget -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+metadata:
+  name: {{ include "envoy-oauth2-middleware.fullname" . }}
+  labels:
+    {{- include "envoy-oauth2-middleware.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "envoy-oauth2-middleware.selectorLabels" . | nindent 6 }}
+  {{ toYaml .Values.podDisruptionBudget | nindent 2 }}
+{{- end -}}

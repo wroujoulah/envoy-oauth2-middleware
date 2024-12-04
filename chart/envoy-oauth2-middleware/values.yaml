@@ -1,0 +1,174 @@
+# -- Default values for envoy-oauth2-middleware.
+# @section Global Settings
+# @descriptionStart
+# This Helm chart deploys an Envoy proxy configured with OAuth2 middleware for authentication.
+# 
+# ## Required Configuration
+# The following values MUST be configured for the chart to function properly:
+# ```yaml
+# envoy:
+#   config:
+#     oidc:
+#       domain: "your-domain.auth.region.amazoncognito.com"    # Required: OAuth2 provider domain
+#       clientId: "your-client-id"                            # Required: OAuth2 client ID
+#       clientSecret: "your-client-secret"                    # Required: OAuth2 client secret
+#     cors:
+#       allowOrigin: "https://your-app.com"                   # Required: CORS origin
+#     cookiesDomain: ".your-domain.com"                      # Required: Cookie domain
+# ```
+# 
+# @descriptionEnd
+#
+# @section Envoy Proxy Configuration
+# @descriptionStart
+# Configuration specific to the Envoy proxy instance.
+# @descriptionEnd
+#
+# @section OAuth2 Configuration
+# @descriptionStart
+# OAuth2 specific settings including endpoints and credentials.
+# All settings in this section are mandatory for the authentication to work.
+# @descriptionEnd
+#
+# @section CORS and Cookie Settings
+# @descriptionStart
+# Cross-Origin Resource Sharing and cookie configuration.
+# @descriptionEnd
+
+# -- Number of replicas to create
+replicaCount: 1
+
+image:
+  # -- Repository of the Envoy proxy image
+  repository: envoyproxy/envoy
+  # -- Image pull policy for the Envoy container
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag whose default is the chart appVersion
+  tag: "v1.31-latest"
+
+# -- List of image pull secrets
+imagePullSecrets: []
+# -- String to partially override the fullname template
+nameOverride: ""
+# -- String to fully override the fullname template
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# -- Pod annotations
+podAnnotations: {}
+
+# -- Pod security context settings
+podSecurityContext: {}
+
+# -- Container security context settings
+securityContext: {}
+
+service:
+  # -- Kubernetes service type
+  type: ClusterIP
+  # -- Service port
+  port: 8080
+
+health:
+  readiness:
+    # -- Path for readiness probe
+    path: /healthz
+  liveness:
+    # -- Path for liveness probe
+    path: /healthz
+
+ingress:
+  # -- Enable ingress controller resource
+  enabled: false
+  # -- IngressClass that will be be used
+  className: ""
+  # -- Ingress annotations
+  annotations: {}
+  # -- Ingress hosts configuration
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  # -- Ingress TLS configuration
+  tls: []
+
+# -- Pod resource requests and limits
+resources: {}
+
+autoscaling:
+  # -- Enable autoscaling for the deployment
+  enabled: false
+  # -- Minimum number of replicas
+  minReplicas: 1
+  # -- Maximum number of replicas
+  maxReplicas: 100
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 80
+
+# -- Node labels for pod assignment
+nodeSelector: {}
+
+# -- Tolerations for pod assignment
+tolerations: []
+
+# -- Affinity settings for pod assignment
+affinity: {}
+
+envoy:
+  # -- Log level for Envoy proxy (info, debug, warn, error)
+  # @default -- info
+  logLevel: info
+
+  secret:
+    # -- HMAC secret key used by Envoy OAuth2 filter for token validation and request signing.
+    # This key is crucial for securing the authentication process and verifying token integrity.
+    # @required
+    hmac: ""
+
+  config:
+    node:
+      # -- Node ID for Envoy configuration
+      id: auth_0
+      # -- Cluster name for Envoy configuration
+      cluster: auth_cluster
+    listener:
+      # -- Listener address for Envoy proxy
+      address: 0.0.0.0
+      # -- Listener port for Envoy proxy
+      port: 8080
+    cors:
+      # -- Allowed origin for CORS configuration
+      # @required
+      allowOrigin: ""
+    # -- Domain for cookies (e.g., .example.com)
+    # @required
+    cookiesDomain: ""
+    oidc:
+      # -- OAuth2 client ID from your identity provider
+      # @required
+      clientId: ""
+      # -- OAuth2 client secret from your identity provider
+      # @required
+      clientSecret: ""
+      # -- OAuth2 provider domain (e.g., your-domain.auth.region.amazoncognito.com)
+      # @required
+      domain: ""
+      endpoint:
+        # -- OAuth2 authorization endpoint path. Will be used as: https://{domain}{authorize}
+        # Example: https://example.us-east-1.amazoncognito.com/oauth2/authorize
+        authorize: /oauth2/authorize
+        # -- OAuth2 token endpoint path. Will be used as: {domain}{token}
+        # Example: example.us-east-1.amazoncognito.com/oauth2/token
+        token: /oauth2/token
+        # -- OAuth2 token revocation endpoint path. Will be used as: https://{domain}{revoke}
+        # Example: https://example.us-east-1.amazoncognito.com/oauth2/revoke
+        revoke: /oauth2/revoke

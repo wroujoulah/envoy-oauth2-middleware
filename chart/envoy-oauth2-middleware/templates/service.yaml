@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "envoy-oauth2-middleware.fullname" . }}
+  labels:
+    {{- include "envoy-oauth2-middleware.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "envoy-oauth2-middleware.selectorLabels" . | nindent 4 }}
